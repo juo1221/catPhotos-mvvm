@@ -34,7 +34,7 @@ const Subject = class extends Set {
     super.delete(obj);
   }
   notify(...arg) {
-    this.forEach((observer) => (arg.length ? observer.observe(arg) : observer.observe(this)));
+    this.forEach((observer) => (arg.length ? observer.observe(...arg) : observer.observe(this)));
   }
 };
 const Model = class extends Subject {
@@ -57,9 +57,49 @@ const HomeModel = class extends Model {
     return this._list;
   }
 };
+
 const Observer = class {
   observe() {}
 };
+
+const ViewModelObjserver = class extends Observer {
+  constructor(_vm) {
+    super();
+    util.prop(this, { _vm });
+  }
+  observe(model) {
+    this._vm.listen(model);
+  }
+};
+const ViewModel = class extends Subject {
+  constructor(isSingleTon) {
+    super();
+    const target = isSingleTon ? singleton.getInstance(this) : this;
+    util.prop(this, { _observer: new ViewModelObjserver(target) });
+    return target;
+  }
+  listen() {
+    util.override();
+  }
+  get observer() {
+    return this._observer;
+  }
+};
+const HomeVm = class extends ViewModel {
+  constructor(isSingleTon) {
+    super();
+    return isSingleTon ? singleton.getInstance(this) : this;
+  }
+  base() {
+    const model = new HomeModel(true);
+    model.add(this.observer);
+    model.notify();
+  }
+  listen(model) {
+    this.notify(model.list);
+  }
+};
+
 const View = class extends Observer {
   constructor(html) {
     super();
@@ -68,8 +108,8 @@ const View = class extends Observer {
   render() {
     util.override();
   }
-  observe() {
-    this.render();
+  observe(v) {
+    this.render(v);
   }
   get view() {
     return this._view;
@@ -78,9 +118,8 @@ const View = class extends Observer {
     return this._vm;
   }
   set viewModel(_vm) {
-    console.log(_vm);
     util.prop(this, { _vm });
-    _vm.addView(this);
+    _vm.add(this);
   }
 };
 const HomeView = class extends View {
@@ -90,7 +129,8 @@ const HomeView = class extends View {
     const nodes = util.sel('.Nodes');
     util.prop(this, { breadCrumb, nodes });
   }
-  render() {
+  render(v) {
+    console.log(v);
     const arr = [{ name: 'kim' }, { name: 'kim2' }, { name: 'kim3' }];
     const { view } = this;
     const template = document.createElement('template');
@@ -117,9 +157,6 @@ const HomeView = class extends View {
     }, 0);
   }
 };
-const HomeVm = class {
-  base() {}
-};
 
 const App = class extends Map {
   constructor(_parent) {
@@ -132,13 +169,14 @@ const App = class extends Map {
   route(path, ...arg) {
     const [p, action = 'base'] = [path];
     const [view, vm] = super.get(p).map((f) => f());
-    view._homeVm = vm;
+    view.viewModel = vm;
     vm[action](...arg);
-    view.render();
     util.append(util.el(util.sel(this._parent), 'innerHTML', ''), view.view);
   }
 };
 (async () => {
+  await new HomeModel(true).load();
+
   const app = new App('.App');
   app.add(
     'home',
@@ -146,7 +184,4 @@ const App = class extends Map {
     () => new HomeVm(true),
   );
   app.route('home');
-  //   const home = new HomeModel(true);
-  //   await home.load();
-  //   console.log(home.list);
 })();
