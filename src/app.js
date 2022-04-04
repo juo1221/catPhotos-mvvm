@@ -186,18 +186,24 @@ const HomeVm = class extends ViewModel {
       const homeModel = new HomeModel(true);
       const backModel = new BackModel(true);
       const target = homeModel.get(id);
-      backModel.save(homeModel);
-      backModel.savePath(homeModel.path);
-      backModel.setState();
-      util.prop(this, { _state: backModel.state });
-      if (homeModel.cachedList.has(target.name)) {
-        homeModel.loadCached(target.name);
+      if (target.type === 'DIRECTORY') {
+        backModel.save(homeModel);
+        backModel.savePath(homeModel.path);
+        backModel.setState();
+        util.prop(this, { _state: backModel.state });
+        if (homeModel.cachedList.has(target.name)) {
+          homeModel.loadCached(target.name);
+        } else {
+          await homeModel.load(id);
+          homeModel.cached(target.name);
+        }
+        homeModel.savePath(target.name);
+        homeModel.notify();
       } else {
-        await homeModel.load(id);
-        homeModel.cached(target.name);
+        window.open(
+          `https://fe-dev-matching-2021-03-serverlessdeploymentbuck-t3kpj3way537.s3.ap-northeast-2.amazonaws.com/public${target.filePath}`,
+        );
       }
-      homeModel.savePath(target.name);
-      homeModel.notify();
     } catch (err) {
       console.log(err.message);
     }
