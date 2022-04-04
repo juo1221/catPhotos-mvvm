@@ -71,6 +71,11 @@ const HomeModel = class extends Model {
   removePath() {
     this._breadCrumb.pop();
   }
+  jumpTo(path) {
+    if (!this._breadCrumb.some((p, idx) => p === path && this._breadCrumb.splice(idx + 1))) {
+      this._breadCrumb.splice(0);
+    }
+  }
   get path() {
     return this._breadCrumb;
   }
@@ -110,6 +115,11 @@ const BackModel = class extends Model {
   }
   savePath(path) {
     this._breadCrumb = [...path];
+  }
+  removeList(target) {
+    if (!this._prevList.some((li, idx) => li === target && this._prevList.splice(idx)))
+      util.err(`현재 위치 입니다. : ${target}`);
+    if (!this._prevList.length) util.prop(this, { _prevState: false });
   }
   get state() {
     return this._prevState;
@@ -170,24 +180,27 @@ const HomeVm = class extends ViewModel {
         break;
     }
   }
-
   async $direct(id) {
     if (!id) return;
-    const homeModel = new HomeModel(true);
-    const backModel = new BackModel(true);
-    const target = homeModel.get(id);
-    backModel.save(homeModel);
-    backModel.savePath(homeModel.path);
-    backModel.setState();
-    util.prop(this, { _state: backModel.state });
-    if (homeModel.cachedList.has(target.name)) {
-      homeModel.loadCached(target.name);
-    } else {
-      await homeModel.load(id);
-      homeModel.cached(target.name);
+    try {
+      const homeModel = new HomeModel(true);
+      const backModel = new BackModel(true);
+      const target = homeModel.get(id);
+      backModel.save(homeModel);
+      backModel.savePath(homeModel.path);
+      backModel.setState();
+      util.prop(this, { _state: backModel.state });
+      if (homeModel.cachedList.has(target.name)) {
+        homeModel.loadCached(target.name);
+      } else {
+        await homeModel.load(id);
+        homeModel.cached(target.name);
+      }
+      homeModel.savePath(target.name);
+      homeModel.notify();
+    } catch (err) {
+      console.log(err.message);
     }
-    homeModel.savePath(target.name);
-    homeModel.notify();
   }
   $prev() {
     const homeModel = new HomeModel(true);
@@ -196,6 +209,21 @@ const HomeVm = class extends ViewModel {
     homeModel.removePath();
     backModel.savePath(homeModel.path);
     backModel.notify();
+  }
+  $jump(path) {
+    try {
+      const homeModel = new HomeModel(true);
+      const backModel = new BackModel(true);
+      if (!homeModel.cachedList.has(path)) err(`invalid path:${path}`);
+      const target = homeModel.cachedList.get(path);
+      homeModel.setList(target);
+      homeModel.jumpTo(path);
+      backModel.removeList(target);
+      util.prop(this, { _state: backModel.state });
+      homeModel.notify();
+    } catch (err) {
+      console.log(err.message);
+    }
   }
 };
 
@@ -226,7 +254,6 @@ const HomeView = class extends View {
     super(isSingleTon, util.el('div'));
   }
   render(arr, pathArr) {
-    console.log(pathArr);
     const { view, viewModel } = this;
     const template = document.createElement('template');
     const nodes = arr
@@ -241,11 +268,11 @@ const HomeView = class extends View {
       )
       .join('');
 
-    const path = pathArr.map((path) => `<div>${path}</div>`).join('');
+    const path = pathArr.map((path) => `<div style="cursor:pointer">${path}</div>`).join('');
 
     template.innerHTML = ` 
     <nav class="Breadcrumb">
-        <div>root</div>
+        <div style="cursor:pointer">root</div>
         ${path}
     </nav>
     <div class="Nodes">
@@ -261,6 +288,12 @@ const HomeView = class extends View {
     setTimeout(() => {
       util.sel('.Nodes').addEventListener('click', (e) => viewModel.$direct(e.target.dataset.id));
       util.sel('.div-fas').addEventListener('click', (e) => viewModel.$prev());
+      util
+        .sel('.Breadcrumb')
+        .addEventListener(
+          'click',
+          (e) => e.currentTarget !== e.target && viewModel.$jump(e.target.innerHTML),
+        );
     }, 0);
   }
 };
