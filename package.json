@@ -1,0 +1,25 @@
+{
+  "name": "mvvm-catphotos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juo1221/todoList-mvvm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/juo1221/todoList-mvvm/issues"
+  },
+  "homepage": "https://github.com/juo1221/catPhotos-mvvm",
+  "devDependencies": {
+    "gh-pages": "^3.2.3"
+  }
+}
