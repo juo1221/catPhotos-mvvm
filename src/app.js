@@ -47,6 +47,7 @@ const HomeModel = class extends Model {
   constructor(isSingleTon) {
     super(isSingleTon);
     if (!this._cachedList) util.prop(this, { _cachedList: new Map() });
+    if (!this._breadCrumb) util.prop(this, { _breadCrumb: [] });
   }
   async load(id = '') {
     const _list = await (
@@ -63,6 +64,15 @@ const HomeModel = class extends Model {
   }
   loadCached(name) {
     util.prop(this, { _list: this.cachedList.get(name) });
+  }
+  savePath(_path) {
+    this._breadCrumb.push(_path);
+  }
+  removePath() {
+    this._breadCrumb.pop();
+  }
+  get path() {
+    return this._breadCrumb;
   }
   get list() {
     return this._list;
@@ -98,11 +108,17 @@ const BackModel = class extends Model {
   setState() {
     util.prop(this, { _prevState: true });
   }
+  savePath(path) {
+    this._breadCrumb = [...path];
+  }
   get state() {
     return this._prevState;
   }
   get list() {
     return this._prevList[this._prevList.length - 1];
+  }
+  get path() {
+    return this._breadCrumb;
   }
 };
 
@@ -145,12 +161,12 @@ const HomeVm = class extends ViewModel {
   listen(model) {
     switch (true) {
       case util.is(model, HomeModel):
-        this.notify(model.list);
+        this.notify(model.list, model.path);
         break;
       case util.is(model, BackModel):
         const target = model.load();
         util.prop(this, { _state: model.state });
-        this.notify(target);
+        this.notify(target, model.path);
         break;
     }
   }
@@ -161,6 +177,7 @@ const HomeVm = class extends ViewModel {
     const backModel = new BackModel(true);
     const target = homeModel.get(id);
     backModel.save(homeModel);
+    backModel.savePath(homeModel.path);
     backModel.setState();
     util.prop(this, { _state: backModel.state });
     if (homeModel.cachedList.has(target.name)) {
@@ -169,12 +186,15 @@ const HomeVm = class extends ViewModel {
       await homeModel.load(id);
       homeModel.cached(target.name);
     }
+    homeModel.savePath(target.name);
     homeModel.notify();
   }
   $prev() {
     const homeModel = new HomeModel(true);
     const backModel = new BackModel(true);
     homeModel.setList(backModel.list);
+    homeModel.removePath();
+    backModel.savePath(homeModel.path);
     backModel.notify();
   }
 };
@@ -187,8 +207,8 @@ const View = class extends Observer {
   render() {
     util.override();
   }
-  observe(v) {
-    this.render(v);
+  observe(...v) {
+    this.render(...v);
   }
   get view() {
     return this._view;
@@ -204,11 +224,9 @@ const View = class extends Observer {
 const HomeView = class extends View {
   constructor(isSingleTon) {
     super(isSingleTon, util.el('div'));
-    const breadCrumb = util.sel('.Breadcrumb');
-    const nodes = util.sel('.Nodes');
-    util.prop(this, { breadCrumb, nodes });
   }
-  render(arr) {
+  render(arr, pathArr) {
+    console.log(pathArr);
     const { view, viewModel } = this;
     const template = document.createElement('template');
     const nodes = arr
@@ -222,9 +240,13 @@ const HomeView = class extends View {
         </div>`,
       )
       .join('');
+
+    const path = pathArr.map((path) => `<div>${path}</div>`).join('');
+
     template.innerHTML = ` 
     <nav class="Breadcrumb">
         <div>root</div>
+        ${path}
     </nav>
     <div class="Nodes">
       <div class="Node  ${viewModel._state ? 'visible' : 'invisible'}">
