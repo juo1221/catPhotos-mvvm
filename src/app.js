@@ -194,7 +194,9 @@ const HomeVm = class extends ViewModel {
         if (homeModel.cachedList.has(target.name)) {
           homeModel.loadCached(target.name);
         } else {
+          spinner.classList.toggle('invisible');
           await homeModel.load(id);
+          spinner.classList.toggle('invisible');
           homeModel.cached(target.name);
         }
         homeModel.savePath(target.name);
@@ -258,6 +260,7 @@ const View = class extends Observer {
 const HomeView = class extends View {
   constructor(isSingleTon) {
     super(isSingleTon, util.el('div'));
+    const spinner = util.sel('.spinner');
   }
   render(arr, pathArr) {
     const { view, viewModel } = this;
@@ -289,6 +292,7 @@ const HomeView = class extends View {
       </div>
     ${nodes}
     </div>
+   
     `;
     util.append(util.el(view, 'innerHTML', ''), template.content);
     setTimeout(() => {
@@ -320,10 +324,14 @@ const App = class extends Map {
     util.append(util.el(util.sel(this._parent), 'innerHTML', ''), view.view);
   }
 };
+
 const app = new App('.App');
+const spinner = util.sel('.Loading');
+
 (async () => {
   const homeModel = new HomeModel(true);
   await homeModel.load();
+  spinner.classList.toggle('invisible');
   homeModel.cached();
   app.add(
     'home',
