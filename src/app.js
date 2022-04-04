@@ -86,24 +86,27 @@ const ViewModel = class extends Subject {
   }
 };
 const HomeVm = class extends ViewModel {
-  constructor(isSingleTon) {
-    super();
-    return isSingleTon ? singleton.getInstance(this) : this;
-  }
   base() {
     const model = new HomeModel(true);
     model.add(this.observer);
     model.notify();
   }
   listen(model) {
+    if (!util.is(model, HomeModel)) util.err(`invalid model : ${model}`);
     this.notify(model.list);
+  }
+  async $direct(id) {
+    if (!id) return;
+    const homeModel = new HomeModel(true);
+    await homeModel.load(id);
+    homeModel.notify();
   }
 };
 
 const View = class extends Observer {
-  constructor(html) {
+  constructor(isSingleTon, html) {
     super();
-    util.prop(this, { _view: html });
+    return util.prop(isSingleTon ? singleton.getInstance(this) : this, { _view: html });
   }
   render() {
     util.override();
@@ -123,23 +126,23 @@ const View = class extends Observer {
   }
 };
 const HomeView = class extends View {
-  constructor() {
-    super(document.createDocumentFragment());
+  constructor(isSingleTon) {
+    super(isSingleTon, util.el('div'));
     const breadCrumb = util.sel('.Breadcrumb');
     const nodes = util.sel('.Nodes');
     util.prop(this, { breadCrumb, nodes });
   }
-  render(v) {
-    console.log(v);
-    const arr = [{ name: 'kim' }, { name: 'kim2' }, { name: 'kim3' }];
-    const { view } = this;
+  render(arr) {
+    const { view, viewModel } = this;
     const template = document.createElement('template');
     const nodes = arr
       .map(
         (obj) => `
-        <div class="Node"> 
-            <div class="div-fas"><i class="fas fa-folder-open"></i></div>
-            <div>2021/04</div>
+        <div class="Node" data-id=${obj.id}> 
+            <div class="div-fas" style="pointer-events:none"><i class="fas fa-${
+              obj.type === 'DIRECTORY' ? 'folder-open' : 'file-image'
+            }"></i></div>
+            <div style="pointer-events:none">${obj.name}</div>
         </div>`,
       )
       .join('');
@@ -151,9 +154,9 @@ const HomeView = class extends View {
     ${nodes}
     </div>
     `;
-    view.appendChild(template.content);
+    util.append(util.el(view, 'innerHTML', ''), template.content);
     setTimeout(() => {
-      util.sel('.Nodes').addEventListener('click', () => console.log(1));
+      util.sel('.Nodes').addEventListener('click', (e) => viewModel.$direct(e.target.dataset.id));
     }, 0);
   }
 };
@@ -174,10 +177,9 @@ const App = class extends Map {
     util.append(util.el(util.sel(this._parent), 'innerHTML', ''), view.view);
   }
 };
+const app = new App('.App');
 (async () => {
   await new HomeModel(true).load();
-
-  const app = new App('.App');
   app.add(
     'home',
     () => new HomeView(true),
