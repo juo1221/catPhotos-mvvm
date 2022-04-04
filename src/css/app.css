@@ -34,6 +34,7 @@ body {
   display: flex;
   flex-direction: column;
   word-break: keep-all;
+  cursor: pointer;
 }
 
 .Breadcrumb {
@@ -76,4 +77,11 @@ body {
 .div-fas {
   font-size: 50px;
   padding: 16px;
+}
+
+.visible {
+  display: block;
+}
+.invisible {
+  display: none;
 }
