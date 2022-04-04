@@ -46,18 +46,39 @@ const Model = class extends Subject {
 const HomeModel = class extends Model {
   constructor(isSingleTon) {
     super(isSingleTon);
+    if (!this._cachedList) util.prop(this, { _cachedList: new Map() });
   }
   async load(id = '') {
     const _list = await (
       await fetch(`https://zl3m4qq0l9.execute-api.ap-northeast-2.amazonaws.com/dev/${id}`)
     ).json();
+
     util.prop(this, { _list });
   }
   setList(_list) {
     util.prop(this, { _list });
   }
+  cached(key = 'root') {
+    this._cachedList.set(key, this._list);
+  }
+  loadCached(name) {
+    util.prop(this, { _list: this.cachedList.get(name) });
+  }
   get list() {
     return this._list;
+  }
+  get(id) {
+    let res;
+    this._list.some((li) => {
+      if (li.id === id) {
+        res = li;
+        return true;
+      }
+    });
+    return res;
+  }
+  get cachedList() {
+    return this._cachedList;
   }
 };
 const BackModel = class extends Model {
@@ -133,14 +154,21 @@ const HomeVm = class extends ViewModel {
         break;
     }
   }
+
   async $direct(id) {
     if (!id) return;
     const homeModel = new HomeModel(true);
     const backModel = new BackModel(true);
+    const target = homeModel.get(id);
     backModel.save(homeModel);
     backModel.setState();
     util.prop(this, { _state: backModel.state });
-    await homeModel.load(id);
+    if (homeModel.cachedList.has(target.name)) {
+      homeModel.loadCached(target.name);
+    } else {
+      await homeModel.load(id);
+      homeModel.cached(target.name);
+    }
     homeModel.notify();
   }
   $prev() {
@@ -233,7 +261,9 @@ const App = class extends Map {
 };
 const app = new App('.App');
 (async () => {
-  await new HomeModel(true).load();
+  const homeModel = new HomeModel(true);
+  await homeModel.load();
+  homeModel.cached();
   app.add(
     'home',
     () => new HomeView(true),
