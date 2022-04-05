@@ -2,6 +2,7 @@ import * as util from '../../utils/util.js';
 import ViewModel from './ViewModel.js';
 import HomeModel from '../model/HomeModel.js';
 import BackModel from '../model/BackModel.js';
+import ValidateHomeModel from '../test/ValidateHomeModel.js';
 import spinner from '../../app.js';
 
 const HomeVm = class extends ViewModel {
@@ -16,7 +17,8 @@ const HomeVm = class extends ViewModel {
   listen(model) {
     switch (true) {
       case util.is(model, HomeModel):
-        this.notify(model.list, model.path);
+        const { datas } = new ValidateHomeModel(model);
+        this.notify(datas.list, datas.path);
         break;
       case util.is(model, BackModel):
         const target = model.load();
@@ -52,7 +54,7 @@ const HomeVm = class extends ViewModel {
         );
       }
     } catch (err) {
-      console.log(err.message);
+      console.log(err);
     }
   }
   $prev() {
@@ -75,7 +77,7 @@ const HomeVm = class extends ViewModel {
       util.prop(this, { _state: backModel.state });
       homeModel.notify();
     } catch (err) {
-      console.log(err.message);
+      console.log(err);
     }
   }
 };

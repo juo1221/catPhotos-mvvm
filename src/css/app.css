@@ -10,7 +10,7 @@ body {
   flex-direction: column;
 }
 
-.app {
+.App {
   border: 1px solid #ccc;
   background-color: #fff;
   border-radius: 5px;
@@ -73,7 +73,6 @@ body {
   top: 50%;
   transform: translate(-50%, -50%);
 }
-
 .div-fas {
   font-size: 50px;
   padding: 16px;

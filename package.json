@@ -12,13 +12,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/juo1221/todoList-mvvm.git"
+    "url": "git+https://github.com/juo1221/catPhotos-mvvm.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/juo1221/todoList-mvvm/issues"
+    "url": "https://github.com/juo1221/catPhotos-mvvm/issues"
   },
   "homepage": "https://juo1221.github.io/catPhotos-mvvm",
   "devDependencies": {
