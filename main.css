@@ -1,0 +1,11 @@
+/*!
+ * 
+ *       Build date: 2022. 4. 5. 오후 3:53:57
+ *       Commit Version: 743ad2b
+ *
+ *       Author: juo
+ *
+ *       email: hwgiwh271@gmail.com
+ *
+ *
+ */*{box-sizing:border-box}body{align-items:center;background-color:#eee;display:flex;flex-direction:column;justify-content:center}.app{background-color:#fff;border:1px solid #ccc;border-radius:5px;height:600px;width:800px}.Nodes{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-start}.Node{cursor:pointer;display:flex;flex-direction:column;margin:8px;min-height:150px;padding:12px;text-align:center;width:140px;word-break:keep-all}.Breadcrumb{border-bottom:1px solid #ccc;display:flex;flex-direction:row;height:62px;padding:16px}.Breadcrumb>div{padding:4px}.Breadcrumb>div:after{content:" -"}.Breadcrumb>div:last-child:after{content:""}.Modal{background-color:rgba(0,0,0,.5);height:100%;left:0;position:fixed;top:0;width:100%;z-index:1}.Modal>div{left:50%;position:fixed;top:50%;transform:translate(-50%,-50%)}.div-fas{font-size:50px;padding:16px}.visible{display:block}.invisible{display:none}
