@@ -1,5 +1,6 @@
 'use strict';
 import * as util from './utils/util.js';
+import './css/app.css';
 import HomeModel from './mvvm/model/HomeModel.js';
 import HomeView from './mvvm/view/HomeView.js';
 import HomeVm from './mvvm/viewModel/HomeVm.js';
